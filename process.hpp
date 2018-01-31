@@ -50,19 +50,19 @@ public:
 
     bool write(const uintptr_t address, const size_t size, void* buffer) const;
 
-    template<typename T, typename = std::enable_if<std::is_trivially_copyable_v<T>>>
+    template<typename T, typename = std::enable_if_t<std::is_trivially_copyable_v<T>>>
     bool read(const uintptr_t address, T& data)
     {
         return read(address, sizeof(T), &data);
     }
 
-    template<typename T, typename = std::enable_if<std::is_trivially_copyable_v<T>>>
+    template<typename T, typename = std::enable_if_t<std::is_trivially_copyable_v<T>>>
     bool write(const uintptr_t address, T& data)
     {
         return write(address, sizeof(T), &data);
     }
 
-    template<typename T, typename = std::enable_if<std::is_trivially_copyable_v<T>>>
+    template<typename T, typename = std::enable_if_t <std::is_trivially_constructible_v<T >> >
     T read(const uintptr_t address)
     {
         T data;
