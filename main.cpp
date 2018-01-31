@@ -149,6 +149,7 @@ int main(const int argc, char** argv)
                 {
                     const auto string_buffer = new char[string_length + 1];
                     ros_process.read(data_entry + 0x14, string_length, string_buffer);
+                    string_buffer[string_length] = 0;
                     printf("\t\t-> value: \"%s\"\n", string_buffer);
                     delete[] string_buffer;
                 }
