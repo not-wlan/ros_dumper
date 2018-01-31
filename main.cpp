@@ -1,6 +1,7 @@
 #include <cassert>
 #include <thread>
 #include <chrono>
+#include <vector>
 #include "process.hpp"
 
 #ifdef _WIN64 
