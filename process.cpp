@@ -92,11 +92,14 @@ bool process::find(const std::wstring& name, pid_t& pid)
     {
         auto current = buffer;
 
+        status = STATUS_NOT_FOUND;
+
         while (current->NextEntryOffset != 0)
         {
             if (RtlEqualUnicodeString(&process_name, &current->ImageName, true))
             {
                 pid = (pid_t)current->UniqueProcessId;
+                status = STATUS_SUCCESS;
                 break;
             }
 
