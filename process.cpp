@@ -3,20 +3,11 @@
 #include <ntstatus.h>
 #include <TlHelp32.h>
 
-inline bool is_equal(const PUNICODE_STRING s1, const PUNICODE_STRING s2, const bool case_insensitive)
-{
-    using RtlEqualUnicodeStringFn = BOOLEAN(WINAPI*)(PUNICODE_STRING, PUNICODE_STRING, BOOLEAN);
-    static RtlEqualUnicodeStringFn RtlEqualUnicodeString = nullptr;
-    if (RtlEqualUnicodeString == nullptr)
-    {
-        const auto ntdll = GetModuleHandleA("ntdll");
-        assert(ntdll != nullptr);
-        RtlEqualUnicodeString = (RtlEqualUnicodeStringFn)GetProcAddress(ntdll, "RtlEqualUnicodeString");
-        assert(RtlEqualUnicodeString != nullptr);
-    }
-    return RtlEqualUnicodeString(s1, s2, case_insensitive);
-}
+#pragma comment(lib, "ntdll.lib")
 
+EXTERN_C __declspec(dllimport) BOOLEAN WINAPI RtlEqualUnicodeString(PUNICODE_STRING, PUNICODE_STRING, BOOLEAN);
+EXTERN_C __declspec(dllimport) NTSTATUS NTAPI NtReadVirtualMemory(HANDLE, PVOID, PVOID, SIZE_T, PULONG);
+EXTERN_C __declspec(dllimport) NTSTATUS NTAPI NtWriteVirtualMemory(HANDLE, PVOID, PVOID, SIZE_T, PULONG);
 
 bool process::open()
 {
@@ -36,12 +27,12 @@ bool process::open()
 
 bool process::read(const uintptr_t address, const size_t size, void* buffer) const
 {
-    return ReadProcessMemory(m_handle, (void*)address, buffer, size, nullptr);
+    return NT_SUCCESS(NtReadVirtualMemory(m_handle, (void*)address, buffer, size, nullptr));
 }
 
 bool process::write(const uintptr_t address, const size_t size, void* buffer) const
 {
-    return WriteProcessMemory(m_handle, (void*)address, buffer, size, nullptr);
+    return NT_SUCCESS(NtWriteVirtualMemory(m_handle, (void*)address, buffer, size, nullptr));
 }
 
 uintptr_t process::module_base(const std::wstring& name) const
@@ -97,26 +88,22 @@ bool process::find(const std::wstring& name, pid_t& pid)
         status = NtQuerySystemInformation(SystemProcessInformation, buffer, required_size, &required_size);
     }
 
-    if (!NT_SUCCESS(status))
+    if (NT_SUCCESS(status))
     {
-        delete[] buffer;
-        return false;
-    }
+        auto current = buffer;
 
-    auto current = buffer;
-
-    while (current->NextEntryOffset != 0)
-    {
-        if (is_equal(&process_name, &current->ImageName, true))
+        while (current->NextEntryOffset != 0)
         {
-            pid = (pid_t)current->UniqueProcessId;
-            delete[] buffer;
-            return true;
-        }
+            if (RtlEqualUnicodeString(&process_name, &current->ImageName, true))
+            {
+                pid = (pid_t)current->UniqueProcessId;
+                break;
+            }
 
-        current = (SYSTEM_PROCESS_INFORMATION*)(uintptr_t(current) + current->NextEntryOffset);
+            current = (SYSTEM_PROCESS_INFORMATION*)(uintptr_t(current) + current->NextEntryOffset);
+        }
     }
 
     delete[] buffer;
-    return false;
+    return NT_SUCCESS(status);
 }
