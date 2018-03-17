@@ -10,11 +10,11 @@
 
 namespace offsets
 {
-    std::size_t LocalPlayer = 0x1ED7794;
-    std::size_t Client = 0x1ED73D8;
+    std::size_t LocalPlayer = 0x1EDEA74;
+    std::size_t Client = 0x1EDE6B8;
     std::size_t Render = 0x1E82B28;
-    std::size_t SceneContext = 0x1CD54D0;
-    std::size_t m_ppObjects = 0xE9C;
+    std::size_t SceneContext = 0x1CDC4D0;
+    std::size_t m_ppObjects = 3740;
     std::size_t m_entities = 0xE98;
 }
 
